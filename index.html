@@ -5269,6 +5269,442 @@ document.getElementById("chat-in")?.addEventListener("keydown",e=>{if(e.key==="E
   obs.observe(gr);
 })();
 </script>
+<!-- ======================================================
+   IM SYSTEM — AI CHATBOT POPUP
+   Zid had code 9bal </body> f site dyalek
+   API Key: bdlha b API KEY dyalek f mkan li mcharat lih
+   ====================================================== -->
+ 
+<style>
+/* ---- NOTIFICATION BADGE ---- */
+#imchat-notif{
+  position:fixed;bottom:158px;right:20px;
+  background:#fff;border:1px solid #e2e8f0;
+  border-radius:14px;padding:10px 14px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:12px;font-weight:600;color:#1e293b;
+  box-shadow:0 8px 28px rgba(79,70,229,.13);
+  z-index:992;display:flex;align-items:center;gap:8px;
+  animation:imSlideIn .5s cubic-bezier(.34,1.56,.64,1) both;
+  max-width:220px;cursor:pointer;
+}
+#imchat-notif::after{
+  content:"";position:absolute;bottom:-7px;right:22px;
+  width:12px;height:12px;background:#fff;
+  border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;
+  transform:rotate(45deg);
+}
+#imchat-notif .im-notif-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#10b981;flex-shrink:0;
+  box-shadow:0 0 8px rgba(16,185,129,.6);
+  animation:imPulse 1.5s infinite;
+}
+#imchat-badge{
+  position:fixed;bottom:138px;right:20px;
+  width:20px;height:20px;border-radius:50%;
+  background:#ef4444;color:#fff;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:11px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  z-index:994;animation:imBounce .6s cubic-bezier(.34,1.56,.64,1) both .8s;
+  box-shadow:0 2px 8px rgba(239,68,68,.4);
+}
+ 
+/* ---- CHAT BUTTON ---- */
+#imchat-btn{
+  position:fixed;bottom:90px;right:24px;
+  width:56px;height:56px;
+  background:linear-gradient(135deg,#4f46e5,#06b6d4);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:993;
+  box-shadow:0 6px 22px rgba(79,70,229,.45);
+  transition:.3s;border:none;padding:0;
+  animation:imFadeUp .5s cubic-bezier(.34,1.56,.64,1) both 1.2s;
+}
+#imchat-btn::before{
+  content:"";position:absolute;inset:-6px;border-radius:50%;
+  border:2px solid rgba(79,70,229,.25);
+  animation:imWap 2s infinite;
+}
+#imchat-btn:hover{transform:scale(1.1);box-shadow:0 12px 30px rgba(79,70,229,.55)}
+#imchat-btn img{width:38px;height:38px;border-radius:50%;object-fit:cover}
+ 
+/* ---- CHAT WINDOW ---- */
+#imchat-win{
+  position:fixed;bottom:158px;right:24px;
+  width:340px;height:480px;
+  background:#fff;border-radius:22px;
+  box-shadow:0 24px 60px rgba(15,23,42,.16);
+  border:1px solid #e2e8f0;
+  z-index:992;display:none;flex-direction:column;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  overflow:hidden;
+  animation:imPopUp .4s cubic-bezier(.34,1.56,.64,1) both;
+}
+#imchat-win.open{display:flex}
+ 
+/* Header */
+#imchat-head{
+  background:linear-gradient(135deg,#4f46e5,#06b6d4);
+  padding:14px 16px;display:flex;align-items:center;
+  justify-content:space-between;flex-shrink:0;
+}
+.imchat-head-left{display:flex;align-items:center;gap:10px}
+.imchat-head-left img{
+  width:38px;height:38px;border-radius:50%;
+  object-fit:cover;border:2px solid rgba(255,255,255,.35);
+}
+.imchat-head-name{color:#fff;font-size:13px;font-weight:800;display:block}
+.imchat-head-status{
+  color:rgba(255,255,255,.8);font-size:10px;
+  display:flex;align-items:center;gap:4px;margin-top:2px;
+}
+.imchat-head-status i{
+  width:6px;height:6px;border-radius:50%;
+  background:#86efac;display:block;
+  box-shadow:0 0 6px rgba(134,239,172,.8);
+  animation:imPulse 1.5s infinite;
+}
+.imchat-close{
+  background:rgba(255,255,255,.15);border:none;
+  color:#fff;width:28px;height:28px;border-radius:50%;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:.2s;
+}
+.imchat-close:hover{background:rgba(255,255,255,.25)}
+ 
+/* Messages */
+#imchat-body{
+  flex:1;overflow-y:auto;padding:16px;
+  display:flex;flex-direction:column;gap:10px;
+  background:#f8fafc;
+}
+#imchat-body::-webkit-scrollbar{width:4px}
+#imchat-body::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:4px}
+ 
+.imchat-msg{
+  display:flex;gap:8px;align-items:flex-end;
+  animation:imMsgIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+.imchat-msg.user{flex-direction:row-reverse}
+.imchat-msg-av{
+  width:28px;height:28px;border-radius:50%;
+  object-fit:cover;flex-shrink:0;margin-bottom:2px;
+}
+.imchat-msg-bubble{
+  max-width:76%;padding:10px 13px;
+  border-radius:16px;font-size:12.5px;line-height:1.55;
+}
+.imchat-msg.bot .imchat-msg-bubble{
+  background:#fff;color:#1e293b;
+  border:1px solid #e2e8f0;
+  border-bottom-left-radius:4px;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);
+}
+.imchat-msg.user .imchat-msg-bubble{
+  background:linear-gradient(135deg,#4f46e5,#06b6d4);
+  color:#fff;border-bottom-right-radius:4px;
+}
+.imchat-time{
+  font-size:9px;color:#94a3b8;
+  text-align:center;margin:4px 0;
+}
+ 
+/* Typing indicator */
+#imchat-typing{
+  display:none;align-items:center;gap:8px;
+  animation:imMsgIn .3s both;
+}
+#imchat-typing.show{display:flex}
+.imchat-typing-bubble{
+  background:#fff;border:1px solid #e2e8f0;
+  border-radius:16px;border-bottom-left-radius:4px;
+  padding:10px 14px;display:flex;gap:4px;
+  box-shadow:0 2px 8px rgba(15,23,42,.05);
+}
+.imchat-typing-bubble span{
+  width:6px;height:6px;border-radius:50%;
+  background:#94a3b8;animation:imDot .9s infinite;
+}
+.imchat-typing-bubble span:nth-child(2){animation-delay:.15s}
+.imchat-typing-bubble span:nth-child(3){animation-delay:.3s}
+ 
+/* Quick replies */
+#imchat-quick{
+  padding:0 16px 10px;display:flex;gap:6px;
+  flex-wrap:wrap;background:#f8fafc;flex-shrink:0;
+}
+.imchat-qr{
+  padding:6px 12px;border-radius:999px;
+  border:1px solid rgba(79,70,229,.25);
+  background:#fff;color:#4f46e5;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:11px;font-weight:600;cursor:pointer;
+  transition:.2s;white-space:nowrap;
+}
+.imchat-qr:hover{background:#4f46e5;color:#fff}
+ 
+/* Input */
+#imchat-inp-wrap{
+  padding:12px 14px;border-top:1px solid #e2e8f0;
+  display:flex;gap:8px;align-items:center;
+  background:#fff;flex-shrink:0;
+}
+#imchat-inp{
+  flex:1;border:1.5px solid #e2e8f0;border-radius:12px;
+  padding:9px 13px;font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:12px;color:#1e293b;outline:none;
+  transition:.2s;background:#f8fafc;
+}
+#imchat-inp:focus{border-color:#4f46e5;background:#fff}
+#imchat-inp::placeholder{color:#94a3b8}
+#imchat-send{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,#4f46e5,#06b6d4);
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:.2s;
+}
+#imchat-send:hover{transform:scale(1.08)}
+#imchat-send svg{width:16px;height:16px;fill:none;stroke:#fff;stroke-width:2}
+ 
+/* Mobile */
+@media(max-width:400px){
+  #imchat-win{width:calc(100vw - 24px);right:12px;bottom:150px;height:460px}
+  #imchat-btn{bottom:84px;right:16px}
+  #imchat-notif{right:14px;bottom:152px}
+  #imchat-badge{right:14px;bottom:130px}
+}
+ 
+/* Animations */
+@keyframes imSlideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes imFadeUp{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+@keyframes imPopUp{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes imMsgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes imWap{0%{transform:scale(.9);opacity:.7}100%{transform:scale(1.6);opacity:0}}
+@keyframes imBounce{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes imPulse{50%{opacity:.4;transform:scale(.7)}}
+@keyframes imDot{50%{transform:translateY(-5px);background:#4f46e5}}
+</style>
+ 
+<!-- Notification -->
+<div id="imchat-notif" onclick="imOpenChat()">
+  <i class="im-notif-dot"></i>
+  <span id="imchat-notif-text">Any help? Ask me anything!</span>
+</div>
+ 
+<!-- Badge -->
+<div id="imchat-badge">1</div>
+ 
+<!-- Button -->
+<button id="imchat-btn" onclick="imToggleChat()" aria-label="Open chat">
+  <img src="https://i.postimg.cc/qM5TVyXX/Robot-vector-chat-bot-concept-illustration.jpg" alt="AI Assistant">
+</button>
+ 
+<!-- Chat Window -->
+<div id="imchat-win">
+  <!-- Header -->
+  <div id="imchat-head">
+    <div class="imchat-head-left">
+      <img src="https://i.postimg.cc/qM5TVyXX/Robot-vector-chat-bot-concept-illustration.jpg" alt="IM Assistant">
+      <div>
+        <span class="imchat-head-name">IM Assistant</span>
+        <div class="imchat-head-status"><i></i> Online — replies instantly</div>
+      </div>
+    </div>
+    <button class="imchat-close" onclick="imToggleChat()">✕</button>
+  </div>
+ 
+  <!-- Messages -->
+  <div id="imchat-body">
+    <div class="imchat-time" id="imchat-time-start"></div>
+  </div>
+ 
+  <!-- Typing -->
+  <div id="imchat-typing" style="padding:0 16px 8px;background:#f8fafc">
+    <img class="imchat-msg-av" src="https://i.postimg.cc/qM5TVyXX/Robot-vector-chat-bot-concept-illustration.jpg" alt="">
+    <div class="imchat-typing-bubble">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+ 
+  <!-- Quick replies -->
+  <div id="imchat-quick">
+    <button class="imchat-qr" onclick="imSendQuick(this)">💰 Pricing</button>
+    <button class="imchat-qr" onclick="imSendQuick(this)">🌐 Website</button>
+    <button class="imchat-qr" onclick="imSendQuick(this)">🤖 AI Chatbot</button>
+    <button class="imchat-qr" onclick="imSendQuick(this)">📞 Contact</button>
+  </div>
+ 
+  <!-- Input -->
+  <div id="imchat-inp-wrap">
+    <input id="imchat-inp" type="text" placeholder="Ask me anything..." autocomplete="off">
+    <button id="imchat-send" onclick="imSend()">
+      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+ 
+<script>
+// ============================================================
+// ⚠️  DKHOL API KEY DYALEK HNAAAAAA 👇
+// ============================================================
+const IMCHAT_API_KEY = "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";
+// ============================================================
+ 
+const IMCHAT_SYSTEM = `You are the IM SYSTEM AI Assistant — a helpful, friendly and professional assistant for IM SYSTEM, a digital solutions agency based in Morocco.
+ 
+IM SYSTEM services:
+- Website Creation (professional, fast, mobile-first)
+- SEO & Google Visibility (local SEO, Google Business)
+- Social Media Growth (Instagram, TikTok, LinkedIn)
+- Automation (email, CRM, workflows)
+- AI Chatbot (GPT-powered, WhatsApp, Web)
+- Digital Strategy (audit, roadmap, KPIs)
+- Google Ranking (local SEO, Google Maps)
+ 
+Contact: WhatsApp +212617499697 | Email: issammalyh2@gmail.com
+Response time: within 24 hours
+ 
+Rules:
+- Be friendly, concise and professional
+- Always answer in the SAME language as the user (Arabic, French, English, Darija)
+- For pricing, say prices depend on project needs and invite them to contact via WhatsApp
+- For appointments, direct them to WhatsApp
+- Keep answers short (2-3 sentences max) unless more detail is needed
+- End with a helpful follow-up question or CTA`;
+ 
+let imHistory = [];
+let imOpen = false;
+let imNotifShown = true;
+ 
+// Init
+window.addEventListener('load', () => {
+  const now = new Date();
+  document.getElementById('imchat-time-start').textContent =
+    now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+ 
+  // Welcome message after 1.5s
+  setTimeout(() => imAddMsg('bot',
+    "Hi! 👋 I'm the IM SYSTEM assistant. How can I help you today?"), 1500);
+ 
+  // Notification rotation
+  const notifs = [
+    "Any help? Ask me anything!",
+    "💡 Besoin d'un site web?",
+    "🤖 Discover our AI solutions",
+    "📍 Google Ranking available!",
+  ];
+  let ni = 0;
+  setInterval(() => {
+    ni = (ni + 1) % notifs.length;
+    const el = document.getElementById('imchat-notif-text');
+    if(el) el.textContent = notifs[ni];
+  }, 4000);
+});
+ 
+function imToggleChat() {
+  imOpen = !imOpen;
+  const win = document.getElementById('imchat-win');
+  const notif = document.getElementById('imchat-notif');
+  const badge = document.getElementById('imchat-badge');
+  if(imOpen) {
+    win.classList.add('open');
+    if(notif) notif.style.display = 'none';
+    if(badge) badge.style.display = 'none';
+    document.getElementById('imchat-inp').focus();
+  } else {
+    win.classList.remove('open');
+  }
+}
+ 
+function imOpenChat() {
+  if(!imOpen) imToggleChat();
+}
+ 
+function imAddMsg(type, text) {
+  const body = document.getElementById('imchat-body');
+  const div = document.createElement('div');
+  div.className = `imchat-msg ${type}`;
+ 
+  const avatarSrc = "https://i.postimg.cc/qM5TVyXX/Robot-vector-chat-bot-concept-illustration.jpg";
+ 
+  if(type === 'bot') {
+    div.innerHTML = `
+      <img class="imchat-msg-av" src="${avatarSrc}" alt="">
+      <div class="imchat-msg-bubble">${text}</div>`;
+  } else {
+    div.innerHTML = `<div class="imchat-msg-bubble">${text}</div>`;
+  }
+ 
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+ 
+function imShowTyping(show) {
+  document.getElementById('imchat-typing').classList.toggle('show', show);
+  const body = document.getElementById('imchat-body');
+  body.scrollTop = body.scrollHeight;
+}
+ 
+async function imSend() {
+  const inp = document.getElementById('imchat-inp');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  inp.value = '';
+ 
+  // Hide quick replies after first message
+  document.getElementById('imchat-quick').style.display = 'none';
+ 
+  imAddMsg('user', msg);
+  imHistory.push({role:'user', content: msg});
+ 
+  imShowTyping(true);
+ 
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${IMCHAT_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        max_tokens: 300,
+        messages: [
+          {role:'system', content: IMCHAT_SYSTEM},
+          ...imHistory
+        ]
+      })
+    });
+ 
+    const data = await res.json();
+    imShowTyping(false);
+ 
+    if(data.choices && data.choices[0]) {
+      const reply = data.choices[0].message.content;
+      imHistory.push({role:'assistant', content: reply});
+      imAddMsg('bot', reply);
+    } else {
+      imAddMsg('bot', "Sorry, something went wrong. Please contact us on WhatsApp: +212617499697 😊");
+    }
+  } catch(e) {
+    imShowTyping(false);
+    imAddMsg('bot', "Connection issue. Contact us directly: <a href='https://wa.me/212617499697' target='_blank' style='color:#4f46e5;font-weight:700'>WhatsApp</a> 💬");
+  }
+}
+ 
+function imSendQuick(btn) {
+  const text = btn.textContent.replace(/[💰🌐🤖📞]/g,'').trim();
+  document.getElementById('imchat-inp').value = `Tell me about your ${text} service`;
+  imSend();
+}
+ 
+document.getElementById('imchat-inp').addEventListener('keydown', e => {
+  if(e.key === 'Enter') imSend();
+});
+</script>
 
 </body>
 </html>
