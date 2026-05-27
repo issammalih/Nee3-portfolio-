@@ -5545,13 +5545,27 @@ document.getElementById("chat-in")?.addEventListener("keydown",e=>{if(e.key==="E
     </button>
   </div>
 </div>
- 
+ function imToggleChat() {
+  imOpen = !imOpen;
+  const win = document.getElementById('imchat-win');
+  const notif = document.getElementById('imchat-notif');
+  const badge = document.getElementById('imchat-badge');
+  if(imOpen) {
+    win.style.display = 'flex';
+    win.classList.add('open');
+    if(notif) notif.style.display = 'none';
+    if(badge) badge.style.display = 'none';
+    setTimeout(()=>{ document.getElementById('imchat-inp').focus(); }, 100);
+  } else {
+    win.style.display = 'none';
+    win.classList.remove('open');
+  }
+}
 <script>
 // ============================================================
 // ⚠️  DKHOL API KEY DYALEK HNAAAAAA 👇
 // ============================================================
-const IMCHAT_API_KEY = "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";
-// ============================================================
+const IMCHAT_WEBHOOK = "https://portfiloiojdid.issammalyh5.workers.dev";// ============================================================
  
 const IMCHAT_SYSTEM = `You are the IM SYSTEM AI Assistant — a helpful, friendly and professional assistant for IM SYSTEM, a digital solutions agency based in Morocco.
  
