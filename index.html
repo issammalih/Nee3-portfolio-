@@ -5660,51 +5660,44 @@ async function imSend() {
   imAddMsg('user', msg);
   imHistory.push({role:'user', content: msg});
  
-  imShowTyping(true);
- 
-  try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${IMCHAT_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
-        max_tokens: 300,
-        messages: [
-          {role:'system', content: IMCHAT_SYSTEM},
-          ...imHistory
-        ]
-      })
-    });
- 
-    const data = await res.json();
-    imShowTyping(false);
- 
-    if(data.choices && data.choices[0]) {
-      const reply = data.choices[0].message.content;
-      imHistory.push({role:'assistant', content: reply});
-      imAddMsg('bot', reply);
-    } else {
-      imAddMsg('bot', "Sorry, something went wrong. Please contact us on WhatsApp: +212617499697 😊");
-    }
-  } catch(e) {
-    imShowTyping(false);
-    imAddMsg('bot', "Connection issue. Contact us directly: <a href='https://wa.me/212617499697' target='_blank' style='color:#4f46e5;font-weight:700'>WhatsApp</a> 💬");
-  }
-}
- 
-function imSendQuick(btn) {
-  const text = btn.textContent.replace(/[💰🌐🤖📞]/g,'').trim();
-  document.getElementById('imchat-inp').value = `Tell me about your ${text} service`;
-  imSend();
-}
- 
-document.getElementById('imchat-inp').addEventListener('keydown', e => {
-  if(e.key === 'Enter') imSend();
-});
-</script>
+imShowTyping(true);
 
-</body>
-</html>
+// Use n8n webhook as proxy (no CORS issue)
+try {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${IMCHAT_API_KEY}`,
+      'OpenAI-Beta': 'assistants=v1'
+    },
+    mode: 'cors',
+    body: JSON.stringify({
+      model: 'gpt-3.5-turbo',
+      max_tokens: 300,
+      messages: [
+        {role:'system', content: IMCHAT_SYSTEM},
+        ...imHistory
+      ]
+    })
+  });
+
+  if(!res.ok) {
+    throw new Error('API error: ' + res.status);
+  }
+
+  const data = await res.json();
+  imShowTyping(false);
+
+  if(data.choices && data.choices[0]) {
+    const reply = data.choices[0].message.content;
+    imHistory.push({role:'assistant', content: reply});
+    imAddMsg('bot', reply);
+  } else {
+    imAddMsg('bot', "Sorry, something went wrong. Please contact us on WhatsApp: +212617499697 😊");
+  }
+} catch(e) {
+  imShowTyping(false);
+  console.error('Chat error:', e);
+  imAddMsg('bot', "Connection issue. Contact us directly: <a href='https://wa.me/212617499697' target='_blank' style='color:#4f46e5;font-weight:700'>WhatsApp</a> 💬");
+}
