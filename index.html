@@ -5610,95 +5610,13 @@ function imToggleChat() {
   const notif = document.getElementById('imchat-notif');
   const badge = document.getElementById('imchat-badge');
   if(imOpen) {
+    win.style.display = 'flex';
     win.classList.add('open');
     if(notif) notif.style.display = 'none';
     if(badge) badge.style.display = 'none';
-    document.getElementById('imchat-inp').focus();
+    setTimeout(()=>{ document.getElementById('imchat-inp').focus(); }, 100);
   } else {
+    win.style.display = 'none';
     win.classList.remove('open');
   }
-}
- 
-function imOpenChat() {
-  if(!imOpen) imToggleChat();
-}
- 
-function imAddMsg(type, text) {
-  const body = document.getElementById('imchat-body');
-  const div = document.createElement('div');
-  div.className = `imchat-msg ${type}`;
- 
-  const avatarSrc = "https://i.postimg.cc/qM5TVyXX/Robot-vector-chat-bot-concept-illustration.jpg";
- 
-  if(type === 'bot') {
-    div.innerHTML = `
-      <img class="imchat-msg-av" src="${avatarSrc}" alt="">
-      <div class="imchat-msg-bubble">${text}</div>`;
-  } else {
-    div.innerHTML = `<div class="imchat-msg-bubble">${text}</div>`;
-  }
- 
-  body.appendChild(div);
-  body.scrollTop = body.scrollHeight;
-}
- 
-function imShowTyping(show) {
-  document.getElementById('imchat-typing').classList.toggle('show', show);
-  const body = document.getElementById('imchat-body');
-  body.scrollTop = body.scrollHeight;
-}
- 
-async function imSend() {
-  const inp = document.getElementById('imchat-inp');
-  const msg = inp.value.trim();
-  if(!msg) return;
-  inp.value = '';
- 
-  // Hide quick replies after first message
-  document.getElementById('imchat-quick').style.display = 'none';
- 
-  imAddMsg('user', msg);
-  imHistory.push({role:'user', content: msg});
- 
-imShowTyping(true);
-
-// Use n8n webhook as proxy (no CORS issue)
-try {
-imShowTyping(true);
-
-const messages = [
-  {role:'system', content: IMCHAT_SYSTEM},
-  ...imHistory
-];
-
-try {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + IMCHAT_API_KEY
-    },
-    body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
-      max_tokens: 250,
-      messages: messages
-    })
-  });
-
-  const result = await response.json();
-  imShowTyping(false);
-
-  if(result && result.choices && result.choices.length > 0) {
-    const reply = result.choices[0].message.content;
-    imHistory.push({role:'assistant', content: reply});
-    imAddMsg('bot', reply);
-  } else if(result.error) {
-    console.log('OpenAI Error:', result.error);
-    imAddMsg('bot', '⚠️ ' + result.error.message);
-  }
-
-} catch(err) {
-  imShowTyping(false);
-  console.log('Fetch error:', err);
-  imAddMsg('bot', "Please open browser console (F12) and send me the red error 🙏");
 }
