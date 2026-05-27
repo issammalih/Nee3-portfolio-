@@ -5664,40 +5664,41 @@ imShowTyping(true);
 
 // Use n8n webhook as proxy (no CORS issue)
 try {
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+imShowTyping(true);
+
+const messages = [
+  {role:'system', content: IMCHAT_SYSTEM},
+  ...imHistory
+];
+
+try {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${IMCHAT_API_KEY}`,
-      'OpenAI-Beta': 'assistants=v1'
+      'Authorization': 'Bearer ' + IMCHAT_API_KEY
     },
-    mode: 'cors',
     body: JSON.stringify({
       model: 'gpt-3.5-turbo',
-      max_tokens: 300,
-      messages: [
-        {role:'system', content: IMCHAT_SYSTEM},
-        ...imHistory
-      ]
+      max_tokens: 250,
+      messages: messages
     })
   });
 
-  if(!res.ok) {
-    throw new Error('API error: ' + res.status);
-  }
-
-  const data = await res.json();
+  const result = await response.json();
   imShowTyping(false);
 
-  if(data.choices && data.choices[0]) {
-    const reply = data.choices[0].message.content;
+  if(result && result.choices && result.choices.length > 0) {
+    const reply = result.choices[0].message.content;
     imHistory.push({role:'assistant', content: reply});
     imAddMsg('bot', reply);
-  } else {
-    imAddMsg('bot', "Sorry, something went wrong. Please contact us on WhatsApp: +212617499697 😊");
+  } else if(result.error) {
+    console.log('OpenAI Error:', result.error);
+    imAddMsg('bot', '⚠️ ' + result.error.message);
   }
-} catch(e) {
+
+} catch(err) {
   imShowTyping(false);
-  console.error('Chat error:', e);
-  imAddMsg('bot', "Connection issue. Contact us directly: <a href='https://wa.me/212617499697' target='_blank' style='color:#4f46e5;font-weight:700'>WhatsApp</a> 💬");
+  console.log('Fetch error:', err);
+  imAddMsg('bot', "Please open browser console (F12) and send me the red error 🙏");
 }
