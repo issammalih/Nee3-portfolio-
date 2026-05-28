@@ -5260,6 +5260,555 @@ document.getElementById("chat-in")?.addEventListener("keydown",e=>{if(e.key==="E
   obs.observe(gr);
 })();
 </script>
+<!-- ============================================================
+  IM SYSTEMS — AI Chatbot Widget
+  Paste this entire block before </body> in your website HTML
+  Replace WORKER_URL with your Cloudflare Worker URL
+  ============================================================ -->
+
+<style>
+/* ---- CHATBOT WIDGET ---- */
+#im-chat-bubble {
+  position: fixed;
+  bottom: 90px;
+  right: 24px;
+  z-index: 9999;
+}
+
+/* Bubble button */
+#im-chat-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5, #06b6d4);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(79,70,229,.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .2s, box-shadow .2s;
+  position: relative;
+  margin-left: auto;
+}
+#im-chat-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 10px 32px rgba(79,70,229,.55);
+}
+#im-chat-btn img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+#im-chat-btn .im-notif {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 16px;
+  height: 16px;
+  background: #10b981;
+  border-radius: 50%;
+  border: 2.5px solid #fff;
+  animation: imPulse 1.8s infinite;
+}
+@keyframes imPulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+/* Chat window */
+#im-chat-window {
+  position: fixed;
+  bottom: 162px;
+  right: 24px;
+  width: 360px;
+  max-height: 520px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(15,23,42,.18), 0 0 0 1px rgba(79,70,229,.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 9998;
+  transform: scale(.92) translateY(16px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .28s cubic-bezier(.34,1.56,.64,1), opacity .22s ease;
+}
+#im-chat-window.open {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Header */
+.im-chat-head {
+  background: linear-gradient(135deg, #4f46e5 0%, #0ea5e9 100%);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  flex-shrink: 0;
+}
+.im-head-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,.3);
+  flex-shrink: 0;
+}
+.im-head-info { flex: 1; }
+.im-head-name {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  line-height: 1.2;
+}
+.im-head-status {
+  color: rgba(255,255,255,.75);
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+.im-head-status::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+  animation: imPulse 1.5s infinite;
+}
+.im-close-btn {
+  background: rgba(255,255,255,.15);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .15s;
+  flex-shrink: 0;
+}
+.im-close-btn:hover { background: rgba(255,255,255,.25); }
+
+/* Intro banner */
+.im-intro {
+  background: linear-gradient(135deg, #eef2ff, #e0f2fe);
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.55;
+  flex-shrink: 0;
+}
+.im-intro strong { color: #4f46e5; }
+
+/* Messages area */
+#im-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-behavior: smooth;
+}
+#im-messages::-webkit-scrollbar { width: 4px; }
+#im-messages::-webkit-scrollbar-track { background: transparent; }
+#im-messages::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+/* Message bubbles */
+.im-msg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  animation: imMsgIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes imMsgIn {
+  from { opacity: 0; transform: translateY(10px) scale(.96); }
+  to   { opacity: 1; transform: none; }
+}
+.im-msg.user { flex-direction: row-reverse; }
+.im-msg-av {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg,#4f46e5,#06b6d4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.im-msg-av img { width: 100%; height: 100%; object-fit: cover; }
+.im-bubble {
+  max-width: 75%;
+  padding: 10px 13px;
+  border-radius: 16px;
+  font-size: 13px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+.im-msg.bot .im-bubble {
+  background: #f1f5f9;
+  color: #1e293b;
+  border-bottom-left-radius: 4px;
+}
+.im-msg.user .im-bubble {
+  background: linear-gradient(135deg,#4f46e5,#0ea5e9);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+/* Typing indicator */
+.im-typing {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+.im-typing-dots {
+  background: #f1f5f9;
+  border-radius: 16px;
+  border-bottom-left-radius: 4px;
+  padding: 11px 14px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.im-typing-dots span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #94a3b8;
+  animation: imDot 1s infinite;
+}
+.im-typing-dots span:nth-child(2) { animation-delay: .18s; }
+.im-typing-dots span:nth-child(3) { animation-delay: .36s; }
+@keyframes imDot {
+  0%,60%,100% { transform: translateY(0); opacity: .6; }
+  30% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* Quick replies */
+.im-quick-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 14px 8px;
+  flex-shrink: 0;
+}
+.im-quick {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid #c7d2fe;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.im-quick:hover {
+  background: #4f46e5;
+  color: #fff;
+  border-color: #4f46e5;
+  transform: translateY(-1px);
+}
+
+/* Input area */
+.im-chat-foot {
+  padding: 10px 12px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #fff;
+  flex-shrink: 0;
+}
+#im-input {
+  flex: 1;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 9px 13px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #1e293b;
+  outline: none;
+  transition: border-color .15s;
+  resize: none;
+  line-height: 1.4;
+  max-height: 90px;
+  background: #f8fafc;
+}
+#im-input:focus { border-color: #4f46e5; background: #fff; }
+#im-input::placeholder { color: #94a3b8; }
+#im-send {
+  width: 38px; height: 38px;
+  border-radius: 11px;
+  background: linear-gradient(135deg,#4f46e5,#06b6d4);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s, box-shadow .15s;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(79,70,229,.3);
+}
+#im-send:hover { transform: scale(1.08); box-shadow: 0 6px 18px rgba(79,70,229,.4); }
+#im-send:active { transform: scale(.96); }
+#im-send svg { width: 16px; height: 16px; }
+
+/* WhatsApp CTA button inside messages */
+.im-wa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 14px;
+  background: #25D366;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform .15s;
+}
+.im-wa-btn:hover { transform: translateY(-1px); }
+
+/* Powered by */
+.im-powered {
+  text-align: center;
+  font-size: 10px;
+  color: #94a3b8;
+  padding: 6px 0 8px;
+  flex-shrink: 0;
+}
+.im-powered a { color: #4f46e5; text-decoration: none; font-weight: 700; }
+
+/* Mobile */
+@media (max-width: 420px) {
+  #im-chat-window {
+    width: calc(100vw - 20px);
+    right: 10px;
+    bottom: 148px;
+    max-height: 70vh;
+  }
+  #im-chat-bubble { right: 14px; bottom: 80px; }
+}
+</style>
+
+<!-- CHATBOT HTML -->
+<div id="im-chat-bubble">
+  <div id="im-chat-window">
+    <!-- Header -->
+    <div class="im-chat-head">
+      <img class="im-head-logo" src="https://i.postimg.cc/9FnkNssz/Chat-GPT-Image-25-mai-2026-03-20-11.png" alt="IM Systems">
+      <div class="im-head-info">
+        <div class="im-head-name">IM Systems Assistant</div>
+        <div class="im-head-status">Online — réponse en quelques secondes</div>
+      </div>
+      <button class="im-close-btn" onclick="imToggleChat()" aria-label="Close">✕</button>
+    </div>
+    <!-- Intro -->
+    <div class="im-intro">
+      👋 Bonjour ! Je suis l'assistant IA d'<strong>IM Systems</strong>. Posez-moi vos questions sur nos services — sites web, SEO, chatbot IA, automation...
+    </div>
+    <!-- Messages -->
+    <div id="im-messages"></div>
+    <!-- Quick replies -->
+    <div class="im-quick-wrap" id="im-quick-wrap">
+      <button class="im-quick" onclick="imQuick('What services do you offer?')">Our services</button>
+      <button class="im-quick" onclick="imQuick('How much does a website cost?')">Pricing</button>
+      <button class="im-quick" onclick="imQuick('Can you build an AI chatbot?')">AI Chatbot</button>
+      <button class="im-quick" onclick="imQuick('I want to start a project')">Start project</button>
+    </div>
+    <!-- Input -->
+    <div class="im-chat-foot">
+      <textarea id="im-input" rows="1" placeholder="Write your message..." onkeydown="imKeyDown(event)" oninput="imAutoResize(this)"></textarea>
+      <button id="im-send" onclick="imSend()" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+    <div class="im-powered">Powered by <a href="https://issammalih.github.io/Nee3-portfolio-/" target="_blank">IM Systems</a> · AI Assistant</div>
+  </div>
+
+  <!-- Bubble button -->
+  <button id="im-chat-btn" onclick="imToggleChat()" aria-label="Open chat">
+    <img src="https://i.postimg.cc/9FnkNssz/Chat-GPT-Image-25-mai-2026-03-20-11.png" alt="IM Systems">
+    <span class="im-notif"></span>
+  </button>
+</div>
+
+<script>
+(function(){
+  // ====== CONFIG — CHANGE THIS URL ======
+  const WORKER_URL = "https://chatdyalnewproftolio.issammalyh5.workers.dev";
+  // ======================================
+
+  const LOGO = "https://i.postimg.cc/9FnkNssz/Chat-GPT-Image-25-mai-2026-03-20-11.png";
+  const WA_NUM = "212617499697";
+
+  let isOpen = false;
+  let isTyping = false;
+  let history = []; // {role, content}
+  let greeted = false;
+
+  // Toggle chat open/close
+  window.imToggleChat = function() {
+    isOpen = !isOpen;
+    const win = document.getElementById("im-chat-window");
+    win.classList.toggle("open", isOpen);
+    // Remove notification dot once opened
+    const notif = document.querySelector("#im-chat-btn .im-notif");
+    if (notif && isOpen) notif.style.display = "none";
+    if (isOpen && !greeted) {
+      greeted = true;
+      setTimeout(() => imAddBotMsg("Hello! 👋 How can I help you today? I can answer questions about our **websites**, **SEO**, **AI chatbots**, **automation**, or help you start a project. 🚀"), 550);
+    }
+    if (isOpen) setTimeout(() => document.getElementById("im-input").focus(), 350);
+  };
+
+  // Quick reply click
+  window.imQuick = function(text) {
+    document.getElementById("im-quick-wrap").style.display = "none";
+    imAddUserMsg(text);
+    imCallAI(text);
+  };
+
+  // Key handler
+  window.imKeyDown = function(e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); imSend(); }
+  };
+
+  // Auto resize textarea
+  window.imAutoResize = function(el) {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 90) + "px";
+  };
+
+  // Send button
+  window.imSend = function() {
+    const inp = document.getElementById("im-input");
+    const text = inp.value.trim();
+    if (!text || isTyping) return;
+    inp.value = "";
+    inp.style.height = "auto";
+    document.getElementById("im-quick-wrap").style.display = "none";
+    imAddUserMsg(text);
+    imCallAI(text);
+  };
+
+  // Add user bubble
+  function imAddUserMsg(text) {
+    history.push({ role: "user", content: text });
+    const msgs = document.getElementById("im-messages");
+    const div = document.createElement("div");
+    div.className = "im-msg user";
+    div.innerHTML = `<div class="im-bubble">${imEscape(text)}</div>`;
+    msgs.appendChild(div);
+    imScroll();
+  }
+
+  // Add bot bubble
+  function imAddBotMsg(text, withWA = false) {
+    const msgs = document.getElementById("im-messages");
+    const div = document.createElement("div");
+    div.className = "im-msg bot";
+    const formatted = imFormat(text);
+    let html = `
+      <div class="im-msg-av"><img src="${LOGO}" alt="Bot"></div>
+      <div class="im-bubble">${formatted}`;
+    if (withWA) {
+      html += `<br><a class="im-wa-btn" href="https://wa.me/${WA_NUM}" target="_blank">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Contact on WhatsApp
+      </a>`;
+    }
+    html += `</div>`;
+    div.innerHTML = html;
+    msgs.appendChild(div);
+    imScroll();
+  }
+
+  // Show typing dots
+  function imShowTyping() {
+    const msgs = document.getElementById("im-messages");
+    const div = document.createElement("div");
+    div.className = "im-typing";
+    div.id = "im-typing-el";
+    div.innerHTML = `
+      <div class="im-msg-av"><img src="${LOGO}" alt="Bot"></div>
+      <div class="im-typing-dots"><span></span><span></span><span></span></div>`;
+    msgs.appendChild(div);
+    imScroll();
+  }
+
+  function imHideTyping() {
+    const el = document.getElementById("im-typing-el");
+    if (el) el.remove();
+  }
+
+  // Call Cloudflare Worker
+  async function imCallAI(userText) {
+    if (isTyping) return;
+    isTyping = true;
+    imShowTyping();
+
+    try {
+      const res = await fetch(WORKER_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history }),
+      });
+
+      if (!res.ok) throw new Error("Network error");
+      const data = await res.json();
+      const reply = data.reply || "Sorry, something went wrong. Please try again.";
+
+      imHideTyping();
+      history.push({ role: "assistant", content: reply });
+
+      // Show WhatsApp button if reply suggests contact or they want to start project
+      const showWA = /whatsapp|contact|start|project|price|quote|devis|commencer|projet|prix/i.test(userText + reply);
+      imAddBotMsg(reply, showWA);
+
+    } catch (err) {
+      imHideTyping();
+      imAddBotMsg("Sorry, I'm having a connection issue. 😅 Please contact us directly on WhatsApp!", true);
+    } finally {
+      isTyping = false;
+    }
+  }
+
+  // Scroll to bottom
+  function imScroll() {
+    const msgs = document.getElementById("im-messages");
+    setTimeout(() => { msgs.scrollTop = msgs.scrollHeight; }, 60);
+  }
+
+  // Escape HTML
+  function imEscape(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  // Format: **bold**, newlines
+  function imFormat(str) {
+    return imEscape(str)
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br>");
+  }
+})();
+</script>
 
 </body>
 </html>
